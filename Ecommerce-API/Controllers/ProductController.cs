@@ -1,6 +1,7 @@
 ﻿using Ecommerce_API.Data;
 using Ecommerce_API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -11,22 +12,47 @@ namespace Ecommerce_API.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
+        private readonly ApplicationDbContext _dbContext;
+
+        public ProductController(ApplicationDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+
         // GET: api/<ProductController>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IEnumerable<Product> Get([FromServices] ApplicationDbContext dbContext)
+        public IEnumerable<Product> Get()
         {
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-            var products = dbContext.Products.ToList();
-                return products;
+            var products = _dbContext.Products.ToList(); // Refatorar futuramente para fazer a injecao de dependencia com as interfaces
+            return products;
         }
 
         // GET api/<ProductController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("Search/{searchTerm}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult SearchProducts([FromQuery] string searchTerm)
         {
-            return "value";
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                return BadRequest("O parâmetro 'searchTerm' é obrigatório.");
+            }
+
+            var matchingProducts = _dbContext.Products
+                .Where(p => EF.Functions.Like(p.ProductName, $"%{searchTerm}%"))
+                .ToList();
+
+            if (matchingProducts.Count == 0)
+            {
+                return NotFound(); // Nenhum produto correspondente encontrado
+            }
+
+            return Ok(matchingProducts);
         }
+
 
         // POST api/<ProductController>
         [HttpPost]
