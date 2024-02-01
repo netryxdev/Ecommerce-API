@@ -1,5 +1,5 @@
 ﻿using Ecommerce_API.Models;
-using Ecommerce_API.Models.DTOs;
+using Ecommerce_API.Models.DTOs.AuthDTOs;
 
 namespace Ecommerce_API.Repository.IRepository
 {

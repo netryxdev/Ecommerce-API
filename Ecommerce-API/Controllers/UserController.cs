@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Ecommerce_API.Data;
 using Microsoft.AspNetCore.Identity.Data;
-using Ecommerce_API.Models.DTOs;
 using Azure;
 using Ecommerce_API.Models;
 using Ecommerce_API.Repository.IRepository;
+using Ecommerce_API.Models.DTOs.AuthDTOs;
 
 namespace Ecommerce_API.Controllers
 {

@@ -1,5 +1,6 @@
 ﻿using Ecommerce_API.Data;
 using Ecommerce_API.Models;
+using Ecommerce_API.Models.DTOs.ProductDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +14,16 @@ namespace Ecommerce_API.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
+        //Passar esse context para a camada de Repository
         private readonly ApplicationDbContext _dbContext;
+        protected APIResponse _response;
+        private readonly ProductService _productService;
 
         public ProductController(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-
-        // GET: api/<ProductController>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IEnumerable<Product> Get()
@@ -30,13 +32,10 @@ namespace Ecommerce_API.Controllers
             return products;
         }
 
-        // GET api/<ProductController>/5
         [HttpGet("Search/{searchTerm}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult SearchProducts([FromQuery] string searchTerm)
         {
+
             if (string.IsNullOrEmpty(searchTerm))
             {
                 return BadRequest("O parâmetro 'searchTerm' é obrigatório.");
@@ -58,8 +57,30 @@ namespace Ecommerce_API.Controllers
         // POST api/<ProductController>
         [HttpPost]
         [Authorize(Roles = "admin")]
-        public void Post([FromBody] string value)
+        public async Task<ActionResult<APIResponse>> CreateProduct([FromBody] ProductCreateDTO createDTO)
         {
+            try
+            {
+                if (await _villaService.VillaExistsAsync(createDTO.Name))
+                {
+                    ModelState.AddModelError("ErrorMessages", "Villa already Exists!");
+                    return BadRequest(ModelState);
+                }
+
+                // Criação no Service
+                VillaDTO createdVilla = await _villaService.CreateVillaAsync(createDTO);
+
+                // Resposta
+                return CreatedAtRoute("GetVilla", new { id = createdVilla.Id }, createdVilla);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
         }
 
         // PUT api/<ProductController>/5

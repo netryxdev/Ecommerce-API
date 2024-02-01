@@ -1,6 +1,6 @@
 ﻿using Ecommerce_API.Data;
 using Ecommerce_API.Models;
-using Ecommerce_API.Models.DTOs;
+using Ecommerce_API.Models.DTOs.AuthDTOs;
 using Ecommerce_API.Repository.IRepository;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
