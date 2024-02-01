@@ -1,5 +1,6 @@
 ﻿using Ecommerce_API.Data;
 using Ecommerce_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -56,6 +57,7 @@ namespace Ecommerce_API.Controllers
 
         // POST api/<ProductController>
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public void Post([FromBody] string value)
         {
         }
@@ -68,6 +70,7 @@ namespace Ecommerce_API.Controllers
 
         // DELETE api/<ProductController>/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         public void Delete(int id)
         {
         }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Ecommerce_API.Models.DTOs;
 using Azure;
 using Ecommerce_API.Models;
+using Ecommerce_API.Repository.IRepository;
 
 namespace Ecommerce_API.Controllers
 {
@@ -14,20 +15,32 @@ namespace Ecommerce_API.Controllers
     [ApiController]
     public class UserController : Controller
     {
-        private readonly ApplicationDbContext _dbContext;
+        //private readonly ApplicationDbContext _dbContext;
+        private readonly IUserRepository _userRepo;
         protected APIResponse _response;
 
-        public UserController(ApplicationDbContext dbContext)
+        public UserController(IUserRepository userRepo)
         {
-            _dbContext = dbContext;
             _response = new();
+            _userRepo = userRepo;
         }
 
         [HttpPost("login")]
-        [AllowAnonymous]
+        [AllowAnonymous] // Porque qualquer um pode acessar esta rota. (independe de roles)
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO model)
         {
-
+            var loginResponse = await _userRepo.Login(model);
+            if (loginResponse?.User == null || string.IsNullOrEmpty(loginResponse.Token))
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("Username or password is incorrect");
+                return BadRequest(_response);
+            }
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            _response.Result = loginResponse;
+            return Ok(_response);
         }
 
         [HttpPost("register")]
@@ -35,8 +48,8 @@ namespace Ecommerce_API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO model)
         {
             //Passar a verificacao se usuario ja existe para um repositorio de User UserRepository e IUserRepository.
-            var isUserUnique =  _dbContext.Users.FirstOrDefault(x => x.UserName == model.UserName);
-            if (isUserUnique != null)
+            bool ifUserNameUnique = _userRepo.IsUniqueUser(model.UserName);
+            if (!ifUserNameUnique)
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
@@ -44,8 +57,24 @@ namespace Ecommerce_API.Controllers
                 return BadRequest(_response);
             }
 
+            var user = await _userRepo.Register(model);
+            if (user == null)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("Error while registering");
+                return BadRequest(_response);
+            }
 
+            _response.StatusCode = HttpStatusCode.OK;
+            _response.IsSuccess = true;
+            return Ok(_response);
         }
+
+        [HttpGet]
+        [Route("authenticated")]
+        [Authorize]
+        public string Authenticated() => String.Format("Autenticado, ID - {0}", User.Identity.Name);
     }
 }
-}
+
