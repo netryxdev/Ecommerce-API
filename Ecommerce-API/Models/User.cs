@@ -17,7 +17,7 @@ namespace Ecommerce_API.Models
         [Column("user_city")]
         public string UserCity { get; set; }
 
-        [Column("user_address")]
+        [Column("role_id")]
         public int RoleId { get; set; }
 
         [Column("user_address")]

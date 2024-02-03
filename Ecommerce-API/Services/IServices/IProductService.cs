@@ -2,5 +2,6 @@
 {
     public interface IProductService
     {
+        Task<bool> ProductExistsAsync(string productName);
     }
 }

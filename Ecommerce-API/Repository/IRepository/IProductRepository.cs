@@ -1,6 +1,9 @@
-﻿namespace Ecommerce_API.Repository.IRepository
+﻿using Ecommerce_API.Models;
+
+namespace Ecommerce_API.Repository.IRepository
 {
-    public class IProductRepository
+    public interface IProductRepository : IRepository<Product>
     {
+        Task<Product> UpdateAsync(Product entity);
     }
 }

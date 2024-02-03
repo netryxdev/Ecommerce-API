@@ -8,6 +8,5 @@ namespace Ecommerce_API.Repository.IRepository
         bool IsUniqueUser(string username);
         Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDTO);
         Task<User> Register(RegisterRequestDTO registerarionRequestDTO);
-
     }
 }

@@ -30,6 +30,7 @@ namespace Ecommerce_API.Repository
             if (!tracked)
             {
                 query = query.AsNoTracking();
+
             }
 
             if (filter != null)
@@ -77,6 +78,11 @@ namespace Ecommerce_API.Repository
         public async Task SaveAsync()
         {
             await _db.SaveChangesAsync();
+        }
+
+        public async Task<bool> ElementExistsAsync(Expression<Func<T, bool>> filter)
+        {
+            return await _db.Set<T>().AnyAsync(filter);
         }
     }
 }

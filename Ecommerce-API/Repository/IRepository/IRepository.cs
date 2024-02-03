@@ -10,5 +10,6 @@ namespace Ecommerce_API.Repository.IRepository
         Task CreateAsync(T entity);
         Task RemoveAsync(T entity);
         Task SaveAsync();
+        Task<bool> ElementExistsAsync(Expression<Func<T, bool>> filter);
     }
 }

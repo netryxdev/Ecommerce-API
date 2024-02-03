@@ -1,10 +1,14 @@
-﻿using Ecommerce_API.Data;
+﻿using AutoMapper;
+using Ecommerce_API.Data;
 using Ecommerce_API.Models;
 using Ecommerce_API.Models.DTOs.ProductDTOs;
+using Ecommerce_API.Repository.IRepository;
+using Ecommerce_API.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,11 +21,15 @@ namespace Ecommerce_API.Controllers
         //Passar esse context para a camada de Repository
         private readonly ApplicationDbContext _dbContext;
         protected APIResponse _response;
-        private readonly ProductService _productService;
+        private readonly IProductRepository _productRepo;
+        private readonly IProductService _productService;
+        private readonly IMapper _mapper;
+        //readonly ProductService _productService; futuramente para regras de negocio.
 
-        public ProductController(ApplicationDbContext dbContext)
+        public ProductController(ApplicationDbContext dbContext, IMapper mapper)
         {
             _dbContext = dbContext;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -32,8 +40,41 @@ namespace Ecommerce_API.Controllers
             return products;
         }
 
-        [HttpGet("Search/{searchTerm}")]
-        public IActionResult SearchProducts([FromQuery] string searchTerm)
+        [HttpGet("{id:int}", Name = "GetProduct")]
+        //[Authorize(Roles = "admin")]
+        public async Task<ActionResult<APIResponse>> GetProduct(int id)
+        {
+            try
+            {
+                if (id == 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                    // Corrigir bug aqui
+                Product product = await _productRepo.GetAsync(x => x.ProductId == id);
+
+                if (product == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
+
+                _response.Result = _mapper.Map<Product>(product);
+                _response.StatusCode = System.Net.HttpStatusCode.OK;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
+        }
+
+        [HttpGet("{searchTerm}", Name = "Search")]
+        public IActionResult SearchProducts(string searchTerm)
         {
 
             if (string.IsNullOrEmpty(searchTerm))
@@ -56,22 +97,25 @@ namespace Ecommerce_API.Controllers
 
         // POST api/<ProductController>
         [HttpPost]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<APIResponse>> CreateProduct([FromBody] ProductCreateDTO createDTO)
         {
             try
-            {
-                if (await _villaService.VillaExistsAsync(createDTO.Name))
+            {   // Verificacao no service (Business Logic)
+                if (await _productService.ProductExistsAsync(createDTO.ProductName))
                 {
-                    ModelState.AddModelError("ErrorMessages", "Villa already Exists!");
+                    ModelState.AddModelError("ErrorMessages", "Product already Exists!");
                     return BadRequest(ModelState);
                 }
 
-                // Criação no Service
-                VillaDTO createdVilla = await _villaService.CreateVillaAsync(createDTO);
+                Product createdProduct = _mapper.Map<Product>(createDTO);
+                 
+                // Criação no repo (database "upsert"/CRUD operations)
+                await _productRepo.CreateAsync(createdProduct);
 
-                // Resposta
-                return CreatedAtRoute("GetVilla", new { id = createdVilla.Id }, createdVilla);
+                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+                return CreatedAtRoute("GetProduct", new { id = createdProduct.ProductId }, _response);
             }
             catch (Exception ex)
             {

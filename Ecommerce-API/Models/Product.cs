@@ -25,5 +25,11 @@ namespace Ecommerce_API.Models
         
         [Column("product_img_url")]
         public string ProductImgUrl { get; set; }
+
+        [Column("created_date")]
+        public DateTime Created_date { get; set; }
+
+        [Column("updated_date")]
+        public DateTime? Updated_date { get; set; }
     }
 }
