@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
+using Ecommerce_API.Services;
+using Ecommerce_API.Services.IServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,14 +17,35 @@ builder.Services.AddDbContext<ApplicationDbContext>(option => {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
 });
 
-//builder.Services.AddScoped<IVillaRepository, VillaRepository>();
-//builder.Services.AddScoped<IUserRepository, UserRepository>();
-//builder.Services.AddScoped<IVillaNumberRepository, VillaNumberRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 
+//var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
-builder.Services.AddControllers();
+//builder.Services.AddAuthentication(x =>
+//{
+//    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//}).AddJwtBearer(x =>
+//{
+//    x.RequireHttpsMetadata = false;
+//    x.SaveToken = true;
+//    x.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidateIssuerSigningKey = true,
+//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
+//        ValidateIssuer = false,
+//        ValidateAudience = false,
+//    };
+//});
+
+//builder.Services.AddControllers();
+builder.Services.AddControllers(option => {
+    //option.ReturnHttpNotAcceptable = true;
+}).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -1,8 +1,9 @@
 ﻿using Ecommerce_API.Repository.IRepository;
+using Ecommerce_API.Services.IServices;
 
 namespace Ecommerce_API.Services
 {
-    public class ProductService // Service = Regra de negocios
+    public class ProductService : IProductService// Service = Regra de negocios
     {
         private readonly IProductRepository _productRepository;
 

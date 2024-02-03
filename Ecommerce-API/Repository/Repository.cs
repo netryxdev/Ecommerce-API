@@ -30,7 +30,6 @@ namespace Ecommerce_API.Repository
             if (!tracked)
             {
                 query = query.AsNoTracking();
-
             }
 
             if (filter != null)

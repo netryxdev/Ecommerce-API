@@ -26,10 +26,14 @@ namespace Ecommerce_API.Controllers
         private readonly IMapper _mapper;
         //readonly ProductService _productService; futuramente para regras de negocio.
 
-        public ProductController(ApplicationDbContext dbContext, IMapper mapper)
+        public ProductController(IProductRepository productRepo,
+            ApplicationDbContext dbContext, IProductService productService, IMapper mapper)
         {
             _dbContext = dbContext;
             _mapper = mapper;
+            this._response = new();
+            _productRepo = productRepo;
+            _productService = productService;
         }
 
         [HttpGet]
@@ -51,8 +55,8 @@ namespace Ecommerce_API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     return BadRequest(_response);
                 }
-                    // Corrigir bug aqui
-                Product product = await _productRepo.GetAsync(x => x.ProductId == id);
+                    
+                var product = await _productRepo.GetAsync(x => x.ProductId == id);
 
                 if (product == null)
                 {
