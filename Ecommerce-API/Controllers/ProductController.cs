@@ -38,9 +38,10 @@ namespace Ecommerce_API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IEnumerable<Product> Get()
+        public async Task<IEnumerable<Product>> Get()
         {
-            var products = _dbContext.Products.ToList(); // Refatorar futuramente para fazer a injecao de dependencia com as interfaces
+            //_dbContext.Products.ToList();
+            var products = await _productService.GetAllAsync(); // Refatorar futuramente para fazer a injecao de dependencia com as interfaces
             return products;
         }
 
@@ -56,7 +57,7 @@ namespace Ecommerce_API.Controllers
                     return BadRequest(_response);
                 }
                     
-                var product = await _productRepo.GetAsync(x => x.ProductId == id);
+                var product = await _productService.GetAsync(id);
 
                 if (product == null)
                 {
@@ -98,14 +99,12 @@ namespace Ecommerce_API.Controllers
             return Ok(matchingProducts);
         }
 
-
-        // POST api/<ProductController>
         [HttpPost]
         //[Authorize(Roles = "admin")]
         public async Task<ActionResult<APIResponse>> CreateProduct([FromBody] ProductCreateDTO createDTO)
         {
             try
-            {   // Verificacao no service (Business Logic)
+            {   
                 if (await _productService.ProductExistsAsync(createDTO.ProductName))
                 {
                     ModelState.AddModelError("ErrorMessages", "Product already Exists!");
@@ -115,7 +114,7 @@ namespace Ecommerce_API.Controllers
                 Product createdProduct = _mapper.Map<Product>(createDTO);
                  
                 // Criação no repo (database "upsert"/CRUD operations)
-                await _productRepo.CreateAsync(createdProduct);
+                await _productService.CreateAsync(createdProduct);
 
                 _response.StatusCode = System.Net.HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -133,15 +132,69 @@ namespace Ecommerce_API.Controllers
 
         // PUT api/<ProductController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<ActionResult<APIResponse>> UpdateProduct(int id, [FromBody] ProductUpdateDTO updateDTO)
         {
+            try
+            {
+                if (updateDTO == null || id != updateDTO.ProductId)
+                {
+                    return BadRequest();
+                }
+
+                if (await _productService.GetAsync(id) == null)
+                {
+                    ModelState.AddModelError("ErrorMessages", "Villa ID is Invalid!");
+                    return BadRequest(ModelState);
+                }
+
+                Product productUpdated = _mapper.Map<Product>(updateDTO);
+
+                await _productService.UpdateAsync(productUpdated);
+
+                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
         }
 
         // DELETE api/<ProductController>/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
-        public void Delete(int id)
+        public async Task<ActionResult<APIResponse>> DeleteProduct(int id)
         {
+            try
+            {
+                if (id == 0)
+                {
+                    return BadRequest();
+                }
+
+                var product = await _productService.GetAsync(id);
+
+                if (product == null)
+                {
+                    return NotFound();
+                }
+
+                await _productService.RemoveAsync(product);
+                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
         }
     }
 }
