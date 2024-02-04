@@ -27,9 +27,9 @@ namespace Ecommerce_API.Models
         public string ProductImgUrl { get; set; }
 
         [Column("created_date")]
-        public DateTime Created_date { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         [Column("updated_date")]
-        public DateTime? Updated_date { get; set; }
+        public DateTime? UpdatedDate { get; set; }
     }
 }

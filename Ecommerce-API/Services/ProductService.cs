@@ -33,9 +33,9 @@ namespace Ecommerce_API.Services
             return await _productRepo.GetAllAsync();
         }
 
-        public async Task<Product> GetAsync(int id)
+        public async Task<Product> GetAsync(int id, bool tracked = true) //tracker è param opcional
         {
-            return await _productRepo.GetAsync(x => x.ProductId == id);
+            return await _productRepo.GetAsync(x => x.ProductId == id, tracked);
         }
 
         public async Task CreateAsync(Product product)
@@ -51,6 +51,11 @@ namespace Ecommerce_API.Services
         public async Task<Product> UpdateAsync(Product entity)
         {
            return await _productRepo.UpdateAsync(entity);
+        }
+
+        public async Task<List<Product>> SearchProductByNameAsync(string productName)
+        {
+            return await _productRepo.SearchProductByNameAsync(productName);
         }
         //public async Task<Product> UpdateProductAsync(Product entity)
         //{

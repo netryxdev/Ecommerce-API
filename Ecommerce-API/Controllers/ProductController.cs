@@ -18,21 +18,14 @@ namespace Ecommerce_API.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        //Passar esse context para a camada de Repository
-        private readonly ApplicationDbContext _dbContext;
         protected APIResponse _response;
-        private readonly IProductRepository _productRepo;
         private readonly IProductService _productService;
         private readonly IMapper _mapper;
-        //readonly ProductService _productService; futuramente para regras de negocio.
 
-        public ProductController(IProductRepository productRepo,
-            ApplicationDbContext dbContext, IProductService productService, IMapper mapper)
+        public ProductController(IProductService productService, IMapper mapper)
         {
-            _dbContext = dbContext;
             _mapper = mapper;
             this._response = new();
-            _productRepo = productRepo;
             _productService = productService;
         }
 
@@ -40,8 +33,7 @@ namespace Ecommerce_API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IEnumerable<Product>> Get()
         {
-            //_dbContext.Products.ToList();
-            var products = await _productService.GetAllAsync(); // Refatorar futuramente para fazer a injecao de dependencia com as interfaces
+            var products = await _productService.GetAllAsync();
             return products;
         }
 
@@ -79,24 +71,35 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpGet("{searchTerm}", Name = "Search")]
-        public IActionResult SearchProducts(string searchTerm)
+        public async Task<ActionResult<APIResponse>> SearchProducts(string searchTerm)
         {
-
-            if (string.IsNullOrEmpty(searchTerm))
+            try
             {
-                return BadRequest("O parâmetro 'searchTerm' é obrigatório.");
+                if (string.IsNullOrEmpty(searchTerm))
+                {
+                    ModelState.AddModelError("ErrorMessages", "Product already Exists!");
+                    return BadRequest(ModelState);
+                }
+
+                var matchingProducts = await _productService.SearchProductByNameAsync(searchTerm);
+
+                if (matchingProducts.Count == 0)
+                {
+                    return NotFound();
+                }
+
+                _response.Result = matchingProducts;
+                _response.StatusCode = System.Net.HttpStatusCode.OK;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
             }
 
-            var matchingProducts = _dbContext.Products
-                .Where(p => EF.Functions.Like(p.ProductName, $"%{searchTerm}%"))
-                .ToList();
-
-            if (matchingProducts.Count == 0)
-            {
-                return NotFound(); // Nenhum produto correspondente encontrado
-            }
-
-            return Ok(matchingProducts);
+            return _response;
         }
 
         [HttpPost]
@@ -112,8 +115,10 @@ namespace Ecommerce_API.Controllers
                 }
 
                 Product createdProduct = _mapper.Map<Product>(createDTO);
-                 
-                // Criação no repo (database "upsert"/CRUD operations)
+
+                // Se o usuário não forneceu a data de criação, defina-a como DateTime.Now
+                createdProduct.CreatedDate = createDTO.CreatedDate == default ? DateTime.Now : createDTO.CreatedDate;
+
                 await _productService.CreateAsync(createdProduct);
 
                 _response.StatusCode = System.Net.HttpStatusCode.NoContent;
@@ -130,7 +135,6 @@ namespace Ecommerce_API.Controllers
             return _response;
         }
 
-        // PUT api/<ProductController>/5
         [HttpPut("{id}")]
         public async Task<ActionResult<APIResponse>> UpdateProduct(int id, [FromBody] ProductUpdateDTO updateDTO)
         {
@@ -141,7 +145,9 @@ namespace Ecommerce_API.Controllers
                     return BadRequest();
                 }
 
-                if (await _productService.GetAsync(id) == null)
+                bool noTrackQuery = false; // same as AsNoTracking();
+
+                if (await _productService.GetAsync(id, noTrackQuery) == null)
                 {
                     ModelState.AddModelError("ErrorMessages", "Villa ID is Invalid!");
                     return BadRequest(ModelState);
@@ -164,9 +170,8 @@ namespace Ecommerce_API.Controllers
             return _response;
         }
 
-        // DELETE api/<ProductController>/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         public async Task<ActionResult<APIResponse>> DeleteProduct(int id)
         {
             try

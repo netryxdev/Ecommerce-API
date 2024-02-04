@@ -14,6 +14,8 @@ namespace Ecommerce_API
             CreateMap<Product, ProductCreateDTO>();
             CreateMap<ProductCreateDTO, Product>();
 
+            CreateMap<Product, ProductUpdateDTO>();
+            CreateMap<Product, ProductUpdateDTO>().ReverseMap();
             //CreateMap<Villa, VillaCreateDTO>().ReverseMap();
             //CreateMap<Villa, VillaUpdateDTO>().ReverseMap();
 

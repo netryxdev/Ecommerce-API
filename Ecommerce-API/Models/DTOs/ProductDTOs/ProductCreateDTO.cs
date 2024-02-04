@@ -10,5 +10,6 @@ namespace Ecommerce_API.Models.DTOs.ProductDTOs
         public decimal ProductDiscount { get; set; }
         public int ProductCategoryId { get; set; }
         public string ProductImgUrl { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }

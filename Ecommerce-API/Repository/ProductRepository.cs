@@ -18,10 +18,17 @@ namespace Ecommerce_API.Repository
 
         public async Task<Product> UpdateAsync(Product entity)
         {
-            entity.Updated_date = DateTime.Now;
+            entity.UpdatedDate = DateTime.Now;
             _db.Products.Update(entity);
             await _db.SaveChangesAsync();
             return entity;
+        }
+
+        public async Task<List<Product>> SearchProductByNameAsync(string productName)
+        {
+             return _db.Products
+                .Where(p => EF.Functions.Like(p.ProductName, $"%{productName}%"))
+                .ToList();
         }
 
 
