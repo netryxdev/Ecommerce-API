@@ -1,6 +1,7 @@
 ﻿using Ecommerce_API.Data;
 using Ecommerce_API.Models;
 using Ecommerce_API.Models.DTOs.AuthDTOs;
+using Ecommerce_API.Models.Enums;
 using Ecommerce_API.Repository.IRepository;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -47,7 +48,7 @@ namespace Ecommerce_API.Repository
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Name,user.UserId.ToString()),
-                    new Claim(ClaimTypes.Role,user.RoleId.ToString())
+                    new Claim(ClaimTypes.Role,ClaimsConverter.GetRoleName(user.RoleId)) // Conversao do enum para saber nome da role
                 }),
                 Expires = DateTime.UtcNow.AddDays(7), // Tempo de expiracao do JWT token
                 SigningCredentials = new(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -68,8 +69,9 @@ namespace Ecommerce_API.Repository
             {
                 user.UserName = registerarionRequestDTO.UserName;
                 user.UserPassword = registerarionRequestDTO.UserPassword;
-                user.UserName = registerarionRequestDTO.UserName;
-                user.RoleId = registerarionRequestDTO.RoleId;
+                user.UserAdress = registerarionRequestDTO.UserAdress;
+                user.UserCity = registerarionRequestDTO.UserCity;
+                user.RoleId = (int)UserRole.customer;   // Por padrao novo usario = cliente
             };
 
             _db.Users.Add(user);

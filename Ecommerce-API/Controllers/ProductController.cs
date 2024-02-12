@@ -2,6 +2,7 @@
 using Ecommerce_API.Data;
 using Ecommerce_API.Models;
 using Ecommerce_API.Models.DTOs.ProductDTOs;
+using Ecommerce_API.Models.Enums;
 using Ecommerce_API.Repository.IRepository;
 using Ecommerce_API.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +31,7 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IEnumerable<Product>> Get()
         {
@@ -38,6 +40,7 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpGet("{id:int}", Name = "GetProduct")]
+        [AllowAnonymous]
         //[Authorize(Roles = "admin")]
         public async Task<ActionResult<APIResponse>> GetProduct(int id)
         {
@@ -71,6 +74,7 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpGet("{searchTerm}", Name = "Search")]
+        [AllowAnonymous]
         public async Task<ActionResult<APIResponse>> SearchProducts(string searchTerm)
         {
             try
@@ -103,7 +107,7 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "admin")]
+        [Authorize(Roles = nameof(UserRole.admin))]
         public async Task<ActionResult<APIResponse>> CreateProduct([FromBody] ProductCreateDTO createDTO)
         {
             try
@@ -136,6 +140,7 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = nameof(UserRole.admin))]
         public async Task<ActionResult<APIResponse>> UpdateProduct(int id, [FromBody] ProductUpdateDTO updateDTO)
         {
             try
@@ -171,7 +176,7 @@ namespace Ecommerce_API.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "admin")]
+        [Authorize(Roles = nameof(UserRole.admin))]
         public async Task<ActionResult<APIResponse>> DeleteProduct(int id)
         {
             try
